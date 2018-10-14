@@ -56,9 +56,9 @@ int Game_state::shortest_sheep_path() const // TODO: Igor
 	return -1;
 }
 
-int minimax(Game_state state, int depth, int alpha = INT_MIN, int beta = INT_MAX)
+int minimax(Game_state state, int depth, int max_depth = 15, int alpha = INT_MIN, int beta = INT_MAX)
 {
-	if (state.game_over())
+	if (state.game_over() || depth == max_depth)
 		return state.eval_state();
 	int best_val;
 	if (state.sheep_move)
