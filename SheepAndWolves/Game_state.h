@@ -26,11 +26,146 @@ public:
 	vector<vector<char>> get_board();
 	vector<Game_state> get_posible_next_states();
 	bool free_position(Position & new_pos);
+	bool game_over();
+	bool no_path_for_sheep() const;
+	int sheeps_shortest_path();
+	int eval_state() const; //200 - wolves win, 100 - there is no path to the end for the sheep, x - length of the shortest path for the sheep
+	int shortest_sheep_path() const; // TODO: Igor
+	bool sheep_move;
+	void move_wolf(int wolf_number, const Position& new_pos);
+	void move_sheep(const Position& new_pos);
+	void next_move();
+
 private:
 	Position sheep_position;
 	vector<Position> wolves_positions;
-	bool sheep_move;
 };
+
+void Game_state::move_wolf(int wolf_number, const Position& new_pos)
+{
+	wolves_positions[wolf_number] = new_pos;
+}
+
+void Game_state::move_sheep(const Position& new_pos)
+{
+	sheep_position = new_pos;
+}
+
+int Game_state::shortest_sheep_path() const // TODO: Igor
+{
+	return -1;
+}
+
+int minimax(Game_state state, int depth, int alpha = INT_MIN, int beta = INT_MAX)
+{
+	if (state.game_over())
+		return state.eval_state();
+	int best_val;
+	if (state.sheep_move)
+	{
+		best_val = INT_MAX;
+		for (Game_state& child_node : state.get_posible_next_states())
+		{
+			int value = minimax(child_node, depth + 1, alpha, beta);
+			if (value < best_val)
+				best_val = value;
+			if (best_val < beta)
+				beta = best_val;
+			if (beta <= alpha)
+				break;
+		}
+		return best_val;
+	}
+	else
+	{
+		best_val = INT_MIN;
+		for (Game_state& child_node : state.get_posible_next_states())
+		{
+			int value = minimax(child_node, depth + 1, alpha, beta);
+			if (value > best_val)
+				best_val = value;
+			if (best_val > alpha)
+				alpha = best_val;
+			if (beta <= alpha)
+				break;
+		}
+		return best_val;
+	}
+}
+
+void Game_state::next_move() //sheep -> min, woolves -> max
+{
+	if (game_over())
+		return;
+	int curr_cost;
+	if (sheep_move)
+	{
+		int min_cost = INT_MAX;
+		for (const Game_state& next_state : get_posible_next_states())
+		{
+			curr_cost = minimax(next_state, 0);
+			if (curr_cost < min_cost)
+			{
+				wolves_positions = next_state.wolves_positions;
+				sheep_position = next_state.sheep_position;
+				min_cost = curr_cost;
+			}
+		}
+	}
+	else
+	{
+		int max_cost = INT_MIN;
+		for (const Game_state& next_state : get_posible_next_states())
+		{
+			curr_cost = minimax(next_state, 0);
+			if (curr_cost > max_cost)
+			{
+				wolves_positions = next_state.wolves_positions;
+				sheep_position = next_state.sheep_position;
+				max_cost = curr_cost;
+			}
+		}
+	}
+}
+
+bool Game_state::game_over()
+{
+	bool sheep_loose = sheep_move && get_posible_next_states().size() == 0;
+	if (!sheep_loose)
+		return sheep_position.col == 0;
+}
+
+int Game_state::eval_state() const
+{
+	if (no_path_for_sheep())
+		return 100;
+	int sheep_path_length = shortest_sheep_path();
+	if (sheep_path_length == -1)
+		return 200;
+	return sheep_path_length;
+}
+
+bool Game_state::no_path_for_sheep() const
+{
+	vector<bool> rows_taken = { false, false, false, false };
+	int rows_pos;
+	for (int i = 0; i < 4; ++i)
+	{
+		rows_pos = wolves_positions[i].row / 2;
+		if (rows_taken[rows_pos])
+			return false;
+		rows_taken[rows_pos] = true;
+	}
+	return true;
+}
+
+int Game_state::sheeps_shortest_path()
+{
+
+	if (no_path_for_sheep())
+		return -1;
+
+}
   
 inline Game_state::Game_state(bool m_s)
 {
