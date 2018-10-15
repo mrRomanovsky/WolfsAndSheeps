@@ -15,7 +15,12 @@ int main()
 
 	cout << "###################################" << endl;
 	start_state.write_state();
-	cout << start_state.shortest_sheep_path() << endl;
+	//cout << start_state.shortest_sheep_path() << endl;
+
+	/*while (true) {
+		start_state.write_state();
+		start_state.make_move();
+	}*/
 /*
 	for (size_t i = 0; i < s.size(); i++)
 	{

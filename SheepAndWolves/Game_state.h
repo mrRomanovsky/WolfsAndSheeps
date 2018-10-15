@@ -11,6 +11,7 @@ using std::cout;
 using std::endl;
 using std::pair;
 using std::queue;
+using std::cin;
 
 class Game_state
 {
@@ -38,6 +39,7 @@ public:
 	void move_sheep(const Position& new_pos);
 	void next_move();
 	bool no_path_exist();
+	int make_move(); //manual input of moves by sheep
 private:
 	Position sheep_position;
 	vector<Position> wolves_positions;
@@ -51,6 +53,55 @@ void Game_state::move_wolf(int wolf_number, const Position& new_pos)
 void Game_state::move_sheep(const Position& new_pos)
 {
 	sheep_position = new_pos;
+}
+
+int Game_state::make_move() {
+	if (sheep_move) {
+		Position next_move;
+		cout << "Введите координаты Вашего следующего хода (строку и столбец)" << endl;
+		cin >> next_move.row >> next_move.col;
+		if (!correct_position(next_move.row, next_move.col)
+			|| abs(next_move.row - sheep_position.row) > 1
+			|| abs(next_move.col - sheep_position.col) > 1
+			|| (next_move.col + next_move.row) % 2 != 0) {
+			cout << "Некорректный ход! Попробуйте снова." << endl;
+			return -1;
+		}
+		else {
+			move_sheep(next_move);
+			sheep_move = !sheep_move;
+		}
+	}
+	else {
+		cout << "Введите координаты волка, которого вы хотите выбрать (строку и столбец)." << endl;
+		Position wolf_position;
+		int wolf_number;
+		cin >> wolf_position.row >> wolf_position.col;
+		for (int i = 0; i < 4; ++i) {
+			if (wolf_position == wolves_positions[i])
+			{
+				wolf_number = i;
+				break;
+			}
+		}
+		cout << "Вы выбрали волка номер " << wolf_number << endl;
+		Position next_move;
+		cout << "Введите координаты Вашего следующего хода (строку и столбец)" << endl;
+		cin >> next_move.row >> next_move.col;
+		if (!correct_position(next_move.row, next_move.col)
+			|| abs(next_move.row - wolves_positions[wolf_number].row) > 1
+			|| abs(next_move.col - wolves_positions[wolf_number].col) > 1
+			|| (next_move.col + next_move.row) % 2 != 0
+			|| next_move.row < wolves_positions[wolf_number].row) {
+			cout << "Некорректный ход! Попробуйте снова." << endl;
+			return -1;
+		}
+		else {
+			move_wolf(wolf_number, next_move);
+			sheep_move = !sheep_move;
+		}
+	}
+	return 1;
 }
 
 bool Game_state::no_path_exist() {
@@ -268,12 +319,17 @@ inline void Game_state::write_state()
 	vector<vector<char>> board = get_board();
 	for (size_t i = 0; i < 8; ++i)
 	{
+		cout << i << ' ';
 		for (size_t j = 0; j < 8; j++)
 		{
 			cout << board[i][j] << " ";
 		}
 		cout << endl;
 	}
+	cout << "  ";
+	for (int i = 0; i < 8; ++i)
+		cout << i << ' ';
+	cout << endl;
 }
 
 inline vector<vector<char>> Game_state::get_board()
