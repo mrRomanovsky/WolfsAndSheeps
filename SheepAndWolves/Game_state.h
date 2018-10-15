@@ -39,7 +39,7 @@ public:
 	void move_sheep(const Position& new_pos);
 	void next_move();
 	bool no_path_exist();
-	int make_move(); //manual input of moves by sheep
+	int make_move(); //manual input
 private:
 	Position sheep_position;
 	vector<Position> wolves_positions;
