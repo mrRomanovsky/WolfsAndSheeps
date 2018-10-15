@@ -10,6 +10,7 @@ int main()
 	cout << "DRATUI, MIR!" << endl;
 	Game_state start_state = Game_state();
 	start_state.write_state();
+
 	vector<Game_state> s = start_state.get_posible_next_states();
 
 	cout << "###################################" << endl;

@@ -37,7 +37,7 @@ public:
 	void move_wolf(int wolf_number, const Position& new_pos);
 	void move_sheep(const Position& new_pos);
 	void next_move();
-
+	bool no_path_exist();
 private:
 	Position sheep_position;
 	vector<Position> wolves_positions;
@@ -53,15 +53,23 @@ void Game_state::move_sheep(const Position& new_pos)
 	sheep_position = new_pos;
 }
 
-int Game_state::shortest_sheep_path()// TODO: Igor
+bool Game_state::no_path_exist() {
+	return (wolves_positions[0].row == wolves_positions[1].row)
+		&& (wolves_positions[1].row == wolves_positions[2].row)
+		&& (wolves_positions[2].row == wolves_positions[3].row);
+}
+
+int Game_state::shortest_sheep_path()
 {
+
+	if (no_path_exist())
+		return 100;
+
 	queue<Position> q;
 	int board[8][8];
 	for (int i = 0; i < 8; ++i)
 		memset(board[i], 0, 8 * sizeof(int));
 	board[sheep_position.row][sheep_position.col] = 1;
-	for (int i = 0; i < 4; i++)
-		board[wolves_positions[i].row][wolves_positions[i].col] = 255;
 
 	vector<pair<int, int>> steps = vector<pair<int, int>>{ pair<int, int>(-1,-1), pair<int, int>(-1, 1), pair<int, int>(1, -1), pair<int, int>(1,1) };
 	q.push(sheep_position);
@@ -74,8 +82,15 @@ int Game_state::shortest_sheep_path()// TODO: Igor
 		for (int i = 0; i < 4; ++i) {
 			if(!correct_position(pos.row + steps[i].first, pos.col + steps[i].second))
 				continue;
-			new_pos = Position(pos.row + steps[i].first,	pos.col + steps[i].second);
-			if (free_position(new_pos)) {
+			new_pos = Position(pos.row + steps[i].first, pos.col + steps[i].second);
+			bool flag = true;
+			for (int i = 0; i < 4; ++i) { //if there is already a wolf at this point
+				if (new_pos == wolves_positions[i])
+				{
+					flag = false;
+				}
+			}
+			if (flag) {
 				q.push(new_pos);
 				board[new_pos.row][new_pos.col] = board[pos.row][pos.col] + 1;
 			}
@@ -87,7 +102,7 @@ int Game_state::shortest_sheep_path()// TODO: Igor
 		if ((board[0][i * 2] > 0) && (board[0][i * 2] < min))
 			min = board[0][i * 2];
 
-	return min-1;
+	return min == 255 ? 200 : min-1; // 200 - no path and no moves, else min - 1
 }
 
 int minimax(Game_state state, int depth, int max_depth = 15, int alpha = INT_MIN, int beta = INT_MAX)
