@@ -3,12 +3,15 @@
 #include "vector"
 #include "iostream"
 #include "string"
+#include <queue>
 
 using std::vector;
 using std::string;
 using std::cout;
 using std::endl;
 using std::pair;
+using std::queue;
+using std::cin;
 
 class Game_state
 {
@@ -28,14 +31,15 @@ public:
 	bool free_position(Position & new_pos);
 	bool game_over();
 	bool no_path_for_sheep() const;
-	int sheeps_shortest_path();
-	int eval_state() const; //200 - wolves win, 100 - there is no path to the end for the sheep, x - length of the shortest path for the sheep
-	int shortest_sheep_path() const; // TODO: Igor
+	//int sheeps_shortest_path();
+	int eval_state(); //200 - wolves win, 100 - there is no path to the end for the sheep, x - length of the shortest path for the sheep
+	int shortest_sheep_path(); // TODO: Igor
 	bool sheep_move;
 	void move_wolf(int wolf_number, const Position& new_pos);
 	void move_sheep(const Position& new_pos);
 	void next_move();
-
+	bool no_path_exist();
+	int make_move(); //manual input
 private:
 	Position sheep_position;
 	vector<Position> wolves_positions;
@@ -51,9 +55,105 @@ void Game_state::move_sheep(const Position& new_pos)
 	sheep_position = new_pos;
 }
 
-int Game_state::shortest_sheep_path() const // TODO: Igor
+int Game_state::make_move() {
+	if (sheep_move) {
+		Position next_move;
+		cout << "Введите координаты Вашего следующего хода (строку и столбец)" << endl;
+		cin >> next_move.row >> next_move.col;
+		if (!correct_position(next_move.row, next_move.col)
+			|| abs(next_move.row - sheep_position.row) > 1
+			|| abs(next_move.col - sheep_position.col) > 1
+			|| (next_move.col + next_move.row) % 2 != 0) {
+			cout << "Некорректный ход! Попробуйте снова." << endl;
+			return -1;
+		}
+		else {
+			move_sheep(next_move);
+			sheep_move = !sheep_move;
+		}
+	}
+	else {
+		cout << "Введите координаты волка, которого вы хотите выбрать (строку и столбец)." << endl;
+		Position wolf_position;
+		int wolf_number;
+		cin >> wolf_position.row >> wolf_position.col;
+		for (int i = 0; i < 4; ++i) {
+			if (wolf_position == wolves_positions[i])
+			{
+				wolf_number = i;
+				break;
+			}
+		}
+		cout << "Вы выбрали волка номер " << wolf_number << endl;
+		Position next_move;
+		cout << "Введите координаты Вашего следующего хода (строку и столбец)" << endl;
+		cin >> next_move.row >> next_move.col;
+		if (!correct_position(next_move.row, next_move.col)
+			|| abs(next_move.row - wolves_positions[wolf_number].row) > 1
+			|| abs(next_move.col - wolves_positions[wolf_number].col) > 1
+			|| (next_move.col + next_move.row) % 2 != 0
+			|| next_move.row < wolves_positions[wolf_number].row) {
+			cout << "Некорректный ход! Попробуйте снова." << endl;
+			return -1;
+		}
+		else {
+			move_wolf(wolf_number, next_move);
+			sheep_move = !sheep_move;
+		}
+	}
+	return 1;
+}
+
+bool Game_state::no_path_exist() {
+	return (wolves_positions[0].row == wolves_positions[1].row)
+		&& (wolves_positions[1].row == wolves_positions[2].row)
+		&& (wolves_positions[2].row == wolves_positions[3].row);
+}
+
+int Game_state::shortest_sheep_path()
 {
-	return -1;
+
+	if (no_path_exist())
+		return 100;
+
+	queue<Position> q;
+	int board[8][8];
+	for (int i = 0; i < 8; ++i)
+		memset(board[i], 0, 8 * sizeof(int));
+	board[sheep_position.row][sheep_position.col] = 1;
+
+	vector<pair<int, int>> steps = vector<pair<int, int>>{ pair<int, int>(-1,-1), pair<int, int>(-1, 1), pair<int, int>(1, -1), pair<int, int>(1,1) };
+	q.push(sheep_position);
+	Position new_pos;
+	while (!q.empty()) {
+		Position pos = q.front();
+		if (pos.row == 0)
+			break;
+		q.pop();
+		for (int i = 0; i < 4; ++i) {
+			if(!correct_position(pos.row + steps[i].first, pos.col + steps[i].second))
+				continue;
+			new_pos = Position(pos.row + steps[i].first, pos.col + steps[i].second);
+			bool flag = true;
+			for (int i = 0; i < 4; ++i) { //if there is already a wolf at this point
+				if (new_pos == wolves_positions[i])
+				{
+					flag = false;
+				}
+			}
+			if (flag) {
+				q.push(new_pos);
+				board[new_pos.row][new_pos.col] = board[pos.row][pos.col] + 1;
+			}
+		}
+	}
+
+	int min = 255;
+	for (int i = 0; i < 4; ++i)
+		if ((board[0][i * 2] > 0) && (board[0][i * 2] < min))
+			min = board[0][i * 2];
+
+	return min == 255 ? 200 : min-1; // 200 - no path and no moves, else min - 1
 }
 
 int minimax(Game_state state, int depth, int max_depth = 15, int alpha = INT_MIN, int beta = INT_MAX)
@@ -135,7 +235,7 @@ bool Game_state::game_over()
 		return sheep_position.col == 0;
 }
 
-int Game_state::eval_state() const
+int Game_state::eval_state()
 {
 	if (no_path_for_sheep())
 		return 100;
@@ -158,14 +258,14 @@ bool Game_state::no_path_for_sheep() const
 	}
 	return true;
 }
-
-int Game_state::sheeps_shortest_path()
-{
-
-	if (no_path_for_sheep())
-		return -1;
-
-}
+//
+//int Game_state::sheeps_shortest_path()
+//{
+//
+//	if (no_path_for_sheep())
+//		return -1;
+//
+//}
   
 inline Game_state::Game_state(bool m_s)
 {
@@ -219,12 +319,17 @@ inline void Game_state::write_state()
 	vector<vector<char>> board = get_board();
 	for (size_t i = 0; i < 8; ++i)
 	{
+		cout << i << ' ';
 		for (size_t j = 0; j < 8; j++)
 		{
 			cout << board[i][j] << " ";
 		}
 		cout << endl;
 	}
+	cout << "  ";
+	for (int i = 0; i < 8; ++i)
+		cout << i << ' ';
+	cout << endl;
 }
 
 inline vector<vector<char>> Game_state::get_board()
@@ -290,7 +395,7 @@ inline vector<Game_state> Game_state::get_posible_next_states()
 	return next_state;
 }
 
-inline bool Game_state::free_position(Position & new_pos)
+inline bool Game_state::free_position(Position & new_pos) 
 {
 	bool free = true;
 	for (size_t i = 0; i < 4; i++)
