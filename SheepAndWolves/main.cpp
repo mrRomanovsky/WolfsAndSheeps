@@ -7,35 +7,43 @@ using std::vector;
 int main()
 {
 	setlocale(LC_ALL, "Russian");
-	cout << "DRATUI, MIR!" << endl;
+	//vector<Position> woolves_pos = vector<Position> {Position(2, 1), Position(2, 3), Position(1, 4), Position(1, 6) };
+	//Position sheep_pos = Position(2, 5);
+	//Game_state start_state = Game_state(sheep_pos, woolves_pos, false);
 	Game_state start_state = Game_state();
+	//start_state.write_state();
+	//start_state.next_move();
 	start_state.write_state();
-
-	vector<Game_state> s = start_state.get_posible_next_states();
-
-	cout << "###################################" << endl;
-	start_state.write_state();
-	//cout << start_state.shortest_sheep_path() << endl;
-
-	/*while (true) {
-		start_state.write_state();
-		start_state.make_move();
-	}*/
-/*
-	for (size_t i = 0; i < s.size(); i++)
+	int turn;
+	cout << "Who do you wanna be? Sheep - 1, Wolf - 2" << endl;
+	cin >> turn;
+	if (turn == 1)
 	{
-		s[i].write_state();
-	}*/
-	/*
-	vector<Game_state> s1 = s[0].get_posible_next_states();
-	for (size_t i = 0; i < s1.size(); i++)
-	{
-		s1[i].write_state();
+		while (!start_state.game_over())
+		{
+			int move_res = start_state.make_move();
+			while (move_res != 1)
+				start_state.make_move();
+			start_state.write_state();
+			start_state.next_move();
+			start_state.write_state();
+		}
 	}
-	s = s1[0].get_posible_next_states();
-	for (size_t i = 0; i < s.size(); i++)
+	else
 	{
-		s[i].write_state();
-	}*/
+		while (!start_state.game_over())
+		{
+			start_state.next_move();
+			start_state.write_state();
+			if (!start_state.game_over())
+			{
+				int move_res = start_state.make_move();
+				while (move_res != 1)
+					start_state.make_move();
+				start_state.write_state();
+			}
+		}
+	}
+	start_state.write_state();
 	system("pause");
 }
