@@ -19,6 +19,15 @@ int main()
 	cin >> turn;
 	if (turn == 1)
 	{
+		cout << "Do you want to set sheep's starting position? 1 - yes, 2 - no" << endl;
+		cin >> turn;
+		if (turn == 1)
+		{
+			int row, col;
+			cin >> row >> col;
+			start_state.move_sheep(Position(row, col));
+			start_state.write_state();
+		}
 		while (!start_state.game_over())
 		{
 			int move_res = start_state.make_move();

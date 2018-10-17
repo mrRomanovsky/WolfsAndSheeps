@@ -38,7 +38,7 @@ public:
 	void move_wolf(int wolf_number, const Position& new_pos);
 	void move_sheep(const Position& new_pos);
 	void next_move();
-	bool no_path_exist();
+	//bool no_path_exist();
 	int make_move(); //manual input
 private:
 	Position sheep_position;
@@ -106,17 +106,8 @@ int Game_state::make_move() {
 	return 1;
 }
 
-bool Game_state::no_path_exist() {
-	return sheep_position.row != 0 && (wolves_positions[0].row == wolves_positions[1].row)
-		&& (wolves_positions[1].row == wolves_positions[2].row)
-		&& (wolves_positions[2].row == wolves_positions[3].row);
-}
-
 int Game_state::shortest_sheep_path()
 {
-
-	if (no_path_exist())
-		return 100;
 
 	queue<Position> q;
 	int board[8][8];
@@ -150,14 +141,12 @@ int Game_state::shortest_sheep_path()
 		}
 	}
 
-	int min = 255;
+	int min = INT_MAX;
 	for (int i = 1; i <= 7; i += 2)
 		if ((board[0][i] > -1) && (board[0][i] < min))
 			min = board[0][i];
-		/*if ((board[0][i * 2] > 0) && (board[0][i * 2] < min))
-			min = board[0][i * 2];*/
 
-	return min == 255 ? 200 : min; //-1; // 200 - no path and no moves, else min - 1
+	return min == INT_MAX ? 100 : min;
 }
 
 int minimax(Game_state state, int depth, int max_depth = 5, int alpha = INT_MIN, int beta = INT_MAX)
@@ -242,29 +231,11 @@ bool Game_state::game_over()
 
 int Game_state::eval_state()
 {
-	/*if (no_path_for_sheep())
-		return 100;*/
-/*	if (sheep_position.row == 0)
-		return 0;*/
-	int sheep_path_length = shortest_sheep_path();
-	if (sheep_path_length == -1)
+	if (sheep_move && get_posible_next_states().size() == 0)
 		return 200;
+	int sheep_path_length = shortest_sheep_path();
 	return sheep_path_length;
 }
-
-/*bool Game_state::no_path_for_sheep() const
-{
-	vector<bool> rows_taken = { false, false, false, false };
-	int rows_pos;
-	for (int i = 0; i < 4; ++i)
-	{
-		rows_pos = wolves_positions[i].row / 2;
-		if (rows_taken[rows_pos])
-			return false;
-		rows_taken[rows_pos] = true;
-	}
-	return true;
-}*/
 
 inline Game_state::Game_state(bool m_s)
 {
